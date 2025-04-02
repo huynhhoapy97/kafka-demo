@@ -1,8 +1,41 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    # Kafka server url
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
     consumer:
       group-id: order-group
       auto-offset-reset: earliest
     producer:
-      retries: 3
+      # Chuyen doi Object thanh JSON truoc khi gui vao Kafka
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # thuoc tinh acks (Acknowledgement)
+      # 0: Producer gui event len Kafka server, no khong quan tam event co luu thanh cong vao Kafka server hay khong
+      # Vi Producer khong cho phan hoi tu Kafka => Co the dan den tinh trang mat event do Kafka server khong kip luu chang han
+      # 1: Producer cho Leader xac nhan va phan hoi da luu thanh cong nhung khong cho phan hoi tu follower
+      # Van co the mat event neu Leader bi sap ma follower chua duoc luu event truoc do
+      # -1: Producer da luu thanh cong event vao Leader va tat ca follower no moi xac minh gui event thanh cong
+      acks: -1
+      # So lan gui lai message | event neu message | event gui di that bai
+      # => Co the bi trung message | event (du lieu) tren Kafka server
+      retries: 1
+      properties:
+        # Kafka đảm bảo rằng cùng một event hay message (du lieu) không bị ghi nhiều lần nếu Producer retry
+        # giup tranh gui trung du lieu
+        enable.idempotence: true
+        # Producer có thể gửi tối đa 5 request cùng lúc mà chưa cần phản hồi
+        max.in.flight.requests.per.connection: 5
+        # Trong vong <so mili giay> nay neu khong nhan duoc phan hoi (response) tu Kafka server gui ve
+        # xem nhu message | event gui len bi loi (fail)
+        request.timeout.ms: 1
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
